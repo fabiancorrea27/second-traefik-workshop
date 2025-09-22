@@ -1,0 +1,63 @@
+services:
+  traefik:
+    image: traefik:v3.5
+    container_name: traefik
+    command:
+      - "--api.insecure=true"                
+      - "--providers.docker=true"            
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - trefik_net
+    labels:
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`ops.localhost`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=web"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.middlewares=auth-dashboard@docker"
+      
+      - "traefik.http.middlewares.auth-dashboard.basicauth.users=admin:$$apr1$$clKMNCzb$$c5xhA6.DTauZh/7nXox0m0"
+
+  neo4j:
+    image: neo4j:5.23
+    container_name: neo4j_db
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs
+    networks:
+      - trefik_net
+
+  api:
+    build: ./api
+    depends_on:
+      - neo4j
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.api.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.middlewares=api-ratelimit@docker"
+      - "traefik.http.routers.api.service=api@docker"
+      
+      - "traefik.http.routers.api-v1.rule=Host(`api.localhost`) && PathPrefix(`/v1`)"
+      - "traefik.http.routers.api-v1.entrypoints=web"
+      - "traefik.http.routers.api-v1.middlewares=strip-v1@docker,api-ratelimit@docker"
+      - "traefik.http.routers.api-v1.service=api@docker"
+      
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.average=5"
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=10"
+      - "traefik.http.middlewares.strip-v1.stripprefix.prefixes=/v1"
+      
+      - "traefik.http.services.api.loadbalancer.server.port=5000"
+    networks:
+      - trefik_net
+
+networks:
+  trefik_net:
+    driver: bridge
