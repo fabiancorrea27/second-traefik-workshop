@@ -1,5 +1,9 @@
 # Second Traefik Workshop
 
+## Integrantes
+- Walter Mauricio Alfonso Martinez
+- Fabian Leonardo Correa Rojas
+
 ## Diagrama de la solución
 
 ![Diagrama de la solucion](./images/diagram.jpg)
