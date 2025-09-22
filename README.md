@@ -57,7 +57,10 @@ Mientrar que mapeando los puertos directamente implica hacerlo de forma manual, 
 
 ### ¿Qué middlewares usarían en producción y por qué? 
 
-Middlewares de autenticación como (BasicAuth, ForwardAuth), rate limiting para prevenir ataques DoS, de compresión para reducir los tamaños de respuesta y mejorar el rendimiento.
+Implementaría RedirectScheme para forzar HTTPS, garantizando que el trafico de la comunicación este cifrado. Usaría RateLimit para prevenir ataques de denegación de servicio(DoS), limitando la cantidad de peticiones y aplicaría StripPrefix para una gestionar rutas.
 
 ### Riesgos de dejar el dashboard “abierto” y cómo mitigarlos
+
+El dashboard expone información sensible como routers, servicios, middlewares y hostnames de los contenedores. Si se deja abierto, un atacante potencial podría mapear en detalle la arquitectura del sistema, identificando posibles puntos débiles y objetivos estratégicos. Este riesgo es significativo, ya que al reconocer vulnerabilidades se incrementa la probabilidad de explotación y acceso no autorizado al sistema, lo cual resulta especialmente crítico si se manejan bases de datos o información confidencial. Para reducir este riesgo, el dashboard nunca debe quedar expuesto públicamente. En su lugar, debe configurarse para ser accesible únicamente a través de un subdominio interno protegido con autenticación. Además, se recomienda restringir el acceso mediante un firewall, de modo que solo el personal autorizado pueda visualizarlo.
+
 
